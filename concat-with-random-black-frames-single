@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+cd "$(dirname "$0")"
+
+OUT=in.ffconcat
+BLACK=black.jpg
+FRAMES_PER_SECOND=30
+FRAME_DURATION_MS=33
+FRAME_DURATION=00:00:00.033333
+echo ${FRAME_DURATION}
+
+echo "Creating list of files..."
+
+(
+RANDOM=1 # Seed?
+echo "ffconcat version 1.0" > "${OUT}"
+for f in $(find * -type f \( -iname "*.jpg" -o -name "*.jpeg" \) -not -name "black.jpg")
+do
+  echo "file ${f}"
+  echo "duration ${FRAME_DURATION}"
+  echo "file ${BLACK}"
+  BLACK_FRAMES=$((1 + $RANDOM % 10)) # Small bias... not quite uniform
+  BLACK_DURATION_MS=`printf %03d $((FRAME_DURATION_MS * BLACK_FRAMES))`
+  echo "duration 00:00:00.${BLACK_DURATION_MS}"
+  LAST="${f}"
+done
+echo "file ${BLACK}"
+) >> "${OUT}"
+
+echo "Created list of files!"
+echo "Generating video..."
+
+./ffmpeg -y -i "${OUT}" -c:v libx264 -vf fps=${FRAMES_PER_SECOND} -preset slower -crf 15 video-single.mkv
+
+echo "Generated video!"
+
+
